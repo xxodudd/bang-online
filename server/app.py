@@ -11,7 +11,7 @@ import os
 # Flask / Socket.IO 설정
 # =========================
 app = Flask(__name__, static_folder="../web", static_url_path="")
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # =========================
 # 인메모리 상태
