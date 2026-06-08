@@ -1,6 +1,3 @@
-import eventlet
-eventlet.monkey_patch()
-
 from flask import Flask, send_from_directory, request
 from flask_socketio import SocketIO, join_room, emit
 import random
@@ -11,7 +8,7 @@ import os
 # Flask / Socket.IO 설정
 # =========================
 app = Flask(__name__, static_folder="../web", static_url_path="")
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 
 # =========================
 # 인메모리 상태
