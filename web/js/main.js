@@ -36,7 +36,6 @@ const chatDiv = $("chat");
 const soundToggle = $("soundToggle");
 
 // Restore last nick/room
-$("nick").value = localStorage.getItem("bang:nick") || "";
 const lastRoom = localStorage.getItem("bang:room");
 if (lastRoom) $("roomCode").value = lastRoom;
 
@@ -396,9 +395,7 @@ function addLog(text){
 }
 
 function saveNick(){
-  const v = $("nick").value || "Player";
-  localStorage.setItem("bang:nick", v);
-  return v;
+  return $("nick").value || "Player";
 }
 
 function toast(msg){
