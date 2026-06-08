@@ -1,7 +1,11 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, send_from_directory, request
 from flask_socketio import SocketIO, join_room, emit
 import random
 import string
+import os
 
 # =========================
 # Flask / Socket.IO 설정
