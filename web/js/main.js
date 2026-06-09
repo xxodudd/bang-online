@@ -136,6 +136,7 @@ socket.on("room:update", (state)=>{ lastState = state || lastState;
   $("status").innerText = STATUS_KR[state.status] || state.status;
   $("turnSeat").innerText = (state.turnSeat ?? "-");
   renderPlayers(state.players, state.turnSeat);
+  renderPiles(state);
   $("playerCount").textContent = `(${state.players.length}명)`;
 });
 socket.on("log", ({text})=> { addLog(text); notify(); });
@@ -385,6 +386,29 @@ function renderPlayers(players, turnSeat){
     root.appendChild(el);
   });
   $("mySeat").innerText = (mySeat ?? "-");
+}
+
+function renderPiles(state){
+  const root = $("pileArea");
+  if(!root) return;
+
+  const top = state.topDiscard;
+
+  root.innerHTML = `
+    <div class="card">
+      <b>🃏 카드 더미</b><br/>
+      남은 카드: ${state.deckCount ?? 0}장
+    </div>
+
+    <div class="card">
+      <b>🗑️ 버린 더미</b><br/>
+      ${
+        top
+          ? `${escapeHtml(top.name || top.type)}<br/><span class="muted">${escapeHtml(top.rank || "")} ${escapeHtml(top.suit || "")}</span>`
+          : `<span class="muted">비어 있음</span>`
+      }
+    </div>
+  `;
 }
 
 function addLog(text){
