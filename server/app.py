@@ -166,6 +166,8 @@ def public_state(code):
             "character": p.get("character"),
             "board": p.get("board", {}),
             "handCount": len(p.get("hand", [])),
+            "deckCount": len(r["deck"]),
+            "topDiscard": r["discard"][-1] if r["discard"] else None
         })
     turn_seat = None
     if r.get("players") and r.get("status") == "IN_GAME":
@@ -211,10 +213,22 @@ def alive_players(r):
 
 def draw_one(r):
     if not r["deck"]:
-        # 덱이 비면 버림을 셔플해 새 덱으로 (MVP: 단순 셔플)
+
+        if len(r["discard"]) <= 1:
+            return None
+
+        top_discard = r["discard"].pop()
+
         r["deck"] = r["discard"]
-        r["discard"] = []
+        r["discard"] = [top_discard]
+
         random.shuffle(r["deck"])
+
+        announce(
+            r["code"],
+            f"카드 더미가 소진되어 버린 카드 {len(r['deck'])}장을 섞어 새 카드 더미를 만들었습니다."
+        )
+
     return r["deck"].pop() if r["deck"] else None
 
 def reveal_one(r):
