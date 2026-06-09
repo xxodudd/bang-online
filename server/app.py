@@ -452,26 +452,43 @@ def handle_death(r, victim, alive_roles_before=None, killer=None):
 
     announce(r["code"], f"{victim['nick']} 가 제거되었습니다. 역할: {victim['role']}")
 
+    # --- 벌쳐 샘 능력: 죽은 플레이어의 손패 + 장착 카드 획득 ---
     vulture_sam = next(
-            (p for p in r["players"]
-             if p["alive"] and p.get("character") == "VULTURE_SAM"),
-            None
-        )
+        (
+            p for p in r["players"]
+            if p["alive"]
+            and p.get("character") == "VULTURE_SAM"
+            and p["sid"] != victim["sid"]
+        ),
+        None
+    )
 
     if vulture_sam:
         gained = []
 
+        # 손패 획득
         gained.extend(victim["hand"])
         victim["hand"] = []
 
-        # 장착 카드는 현재 board가 실제 카드 객체를 저장하지 않고 True/False라서
-        # 지금 단계에서는 손패만 가져오게 구현
+        # 장착 카드 획득: 현재 board는 실제 카드 객체가 아니므로 가상 카드로 생성
+        for slot, proto in list_board_slots(victim):
+            if slot == "weapon" and proto.get("weapon") == "Colt45":
+                continue
+
+            gained.append({
+                "id": f"SYN-VULTURE-{proto['type']}-{random.randint(1000,9999)}",
+                **proto
+            })
+
+            remove_board_slot(victim, slot)
+
         if gained:
             vulture_sam["hand"].extend(gained)
             dm_hand(vulture_sam)
             announce(
                 r["code"],
-                f"{vulture_sam['nick']} 벌쳐 샘 능력 발동! {victim['nick']}의 손패 {len(gained)}장 획득"
+                f"{vulture_sam['nick']} 벌쳐 샘 능력 발동! "
+                f"{victim['nick']}의 카드 {len(gained)}장 획득"
             )
 
     # --- 무법자 처치 보상 ---
@@ -483,13 +500,10 @@ def handle_death(r, victim, alive_roles_before=None, killer=None):
 
     # --- 보안관이 부관 처치 패널티 ---
     if killer and killer["role"] == "SHERIFF" and victim["role"] == "DEPUTY":
-                
-        # 손패 버림
         discard_cards(r, killer["hand"])
         killer["hand"] = []
         dm_hand(killer)
 
-        # 장착 카드 제거
         killer["board"] = {
             "weapon": "Colt45",
             "barrel": False,
@@ -501,11 +515,10 @@ def handle_death(r, victim, alive_roles_before=None, killer=None):
 
         announce(r["code"], f"{killer['nick']} 부관 오살! 모든 카드 및 장착물 제거")
 
-    # --- 사망자 카드 전부 버림 ---
+    # --- 사망자 카드 정리 ---
     discard_cards(r, victim["hand"])
     victim["hand"] = []
 
-    # (장착물도 버림 처리만 하고 상태는 초기화)
     victim["board"] = {
         "weapon": "Colt45",
         "barrel": False,
