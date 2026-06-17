@@ -31,16 +31,44 @@
     <div class="muted">단축키: 채팅 전송 <span class="kbd">Enter</span></div>
   </div>
 
-  <h3>플레이어 <span class="muted" id="playerCount"></span></h3>
-  <h3>카드 더미</h3>
-  <div id="pileArea" class="row"></div>
-  <div id="players" class="players"></div>
-  <h3>내 손패</h3>
-  <div id="handArea" class="row" style="flex-wrap:wrap; gap:8px"></div>
+  <main id="gameScreen" class="game-screen">
 
-  <div id="roleBadge" class="pill" style="display:none; margin:8px 0;">
-    <span>내 역할: <b id="myRole"></b></span>
-  </div>
+    <section class="table-area">
+      <div class="table-status">
+        <span>플레이어 <b id="playerCount"></b></span>
+        <span>현재 턴: <b id="turnSeatView">-</b></span>
+      </div>
+
+      <div id="players" class="players"></div>
+
+      <div id="pileArea" class="pile-area"></div>
+    </section>
+
+    <section class="message-area">
+      <div class="message-header">
+        <b>게임 로그 / 채팅</b>
+      </div>
+
+      <div id="log"></div>
+
+      <div class="chat-input-row">
+        <input id="chatInput" placeholder="메시지 입력" />
+        <button id="btnSend" class="primary">보내기</button>
+      </div>
+    </section>
+
+    <section class="hand-section">
+      <div class="hand-title">
+        <b>내 손패</b>
+        <div id="roleBadge" class="pill" style="display:none;">
+          <span>내 역할: <b id="myRole"></b></span>
+        </div>
+      </div>
+
+      <div id="handArea" class="hand-area"></div>
+    </section>
+
+  </main>
 
   <!-- Simple Modal -->
   <div id="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); align-items:center; justify-content:center; z-index:9998;">
@@ -53,16 +81,6 @@
     </div>
   </div>
 
-
-  <h3>로그</h3>
-  <div id="log"></div>
-
-  <h3>채팅</h3>
-  <div class="row">
-    <input id="chatInput" style="flex:1" placeholder="메시지 입력" />
-    <button id="btnSend" class="primary">보내기</button>
-  </div>
-  <div id="chat"></div>
   <div style="position:fixed; right:12px; bottom:12px; display:flex; gap:8px; z-index:9999;">
     <button onclick="playBeer()">맥주</button>
     <button onclick="(function(){const s = prompt('대상 seat 입력(인접만):'); if(s!==null) playBangAt(parseInt(s,10));})()">뱅!</button>

@@ -32,7 +32,7 @@ window.playBeer = function(){
 const $ = (id)=>document.getElementById(id);
 
 const logDiv = $("log");
-const chatDiv = $("chat");
+const chatDiv = $("log");
 const soundToggle = $("soundToggle");
 
 // Restore last nick/room
@@ -135,6 +135,7 @@ socket.on("room:update", (state)=>{ lastState = state || lastState;
   };
   $("status").innerText = STATUS_KR[state.status] || state.status;
   $("turnSeat").innerText = (state.turnSeat ?? "-");
+  $("turnSeatView").innerText = (state.turnSeat ?? "-");
   renderPlayers(state.players, state.turnSeat);
   renderPiles(state);
   $("playerCount").textContent = `(${state.players.length}명)`;
@@ -142,7 +143,7 @@ socket.on("room:update", (state)=>{ lastState = state || lastState;
 socket.on("log", ({text})=> { addLog(text); notify(); });
 socket.on("chat:append", ({nick, text})=>{
   const line = document.createElement("div");
-  line.textContent = `${nick}: ${text}`;
+  line.textContent = `[채팅] ${nick}: ${text}`;
   chatDiv.appendChild(line);
   chatDiv.scrollTop = chatDiv.scrollHeight;
   notify();
@@ -332,21 +333,49 @@ function openRespondModal(needs){
 function renderPlayers(players, turnSeat){
   const root = $("players");
   root.innerHTML = "";
+
+  const layoutMap = {
+    4: [
+      { left: "50%", top: "8%" },
+      { left: "14%", top: "48%" },
+      { left: "50%", top: "88%" },
+      { left: "86%", top: "48%" },
+    ],
+    5: [
+      { left: "50%", top: "8%" },
+      { left: "16%", top: "38%" },
+      { left: "26%", top: "82%" },
+      { left: "74%", top: "82%" },
+      { left: "84%", top: "38%" },
+    ],
+    6: [
+      { left: "50%", top: "7%" },
+      { left: "18%", top: "28%" },
+      { left: "16%", top: "68%" },
+      { left: "50%", top: "90%" },
+      { left: "84%", top: "68%" },
+      { left: "82%", top: "28%" },
+    ],
+    7: [
+      { left: "50%", top: "7%" },
+      { left: "22%", top: "20%" },
+      { left: "12%", top: "55%" },
+      { left: "28%", top: "86%" },
+      { left: "72%", top: "86%" },
+      { left: "88%", top: "55%" },
+      { left: "78%", top: "20%" },
+    ],
+  };
+
+  const positions = layoutMap[players.length] || [];
+
   players.forEach((p, index)=>{
     const el = document.createElement("div");
-    el.className = "card";
+    el.className = "card player-card";
 
-    const angle = (2 * Math.PI * index) / players.length - Math.PI / 2;
-    const centerX = 360;
-    const centerY = 260;
-    const radiusX = 280;
-    const radiusY = 190;
-
-    const x = centerX + radiusX * Math.cos(angle);
-    const y = centerY + radiusY * Math.sin(angle);
-
-    el.style.left = `${x}px`;
-    el.style.top = `${y}px`;
+    const pos = positions[index] || { left: "50%", top: "50%" };
+    el.style.left = pos.left;
+    el.style.top = pos.top;
 
     const board = p.board || {};
     const equips = [];
@@ -385,6 +414,7 @@ function renderPlayers(players, turnSeat){
 
     root.appendChild(el);
   });
+
   $("mySeat").innerText = (mySeat ?? "-");
 }
 
