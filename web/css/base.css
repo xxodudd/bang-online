@@ -180,3 +180,67 @@ input, .pill { padding:8px 10px; border-radius:10px; border:1px solid var(--bord
   height:36px;
   padding:6px 10px;
 }
+
+.lobby-screen{
+  min-height: calc(100vh - 40px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.lobby-card{
+  width:360px;
+  padding:32px;
+  border-radius:18px;
+  background:#f4ead8;
+  border:3px solid #8b5a2b;
+  box-shadow:0 10px 30px rgba(0,0,0,0.12);
+  text-align:center;
+}
+
+.bang-logo{
+  font-size:56px;
+  letter-spacing:2px;
+  margin:0 0 24px;
+}
+
+.lobby-input{
+  width:100%;
+  box-sizing:border-box;
+  margin-bottom:10px;
+}
+
+.lobby-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.lobby-row .lobby-input{
+  margin-bottom:0;
+  flex:1;
+}
+
+.lobby-card button{
+  min-height:38px;
+}
+
+.lobby-card > button{
+  width:100%;
+  margin-bottom:10px;
+}
+
+.lobby-sub-info{
+  margin-top:12px;
+  font-size:13px;
+  line-height:1.8;
+  color:#333;
+}
+
+.lobby-options{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:8px;
+  margin-top:12px;
+}
