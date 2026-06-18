@@ -90,16 +90,17 @@ $("btnLeave").onclick = ()=>{
   toast("연결을 종료했습니다. 페이지를 새로고치면 재연결됩니다.");
 };
 
-// Save log
-$("btnSaveLog").onclick = ()=>{
-  const text = Array.from(logDiv.children).map(n => n.textContent).join("\n");
-  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `bang-log-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-};
+if ($("btnSaveLog")) {
+  $("btnSaveLog").onclick = ()=>{
+    const text = Array.from(logDiv.children).map(n => n.textContent).join("\n");
+    const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `bang-log-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+}
 
 // Socket events
 socket.on("connect", ()=>{
@@ -517,7 +518,7 @@ function closeModal(){
 $("modalCancel").onclick = closeModal;
 
 function notify(){
-  if(!soundToggle.checked) return;
+  if(!soundToggle || !soundToggle.checked) return;
   try{
     if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const o = audioCtx.createOscillator();
@@ -529,9 +530,4 @@ function notify(){
     o.start();
     setTimeout(()=>{ o.stop(); }, 120);
   }catch(e){ /* ignore */ }
-}
-
-function showGameScreen(){
-  $("lobbyPanel").style.display = "none";
-  $("gameScreen").style.display = "flex";
 }
