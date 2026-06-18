@@ -128,6 +128,10 @@ socket.on("room:joined", ({code, seat, spectator})=>{
   notify();
 });
 socket.on("room:update", (state)=>{ lastState = state || lastState;
+  
+  if (state.status === "IN_GAME") {
+    showGameScreen();
+  }
   const STATUS_KR = {
     LOBBY: "대기 중",
     IN_GAME: "게임 중",
@@ -503,4 +507,9 @@ function notify(){
     o.start();
     setTimeout(()=>{ o.stop(); }, 120);
   }catch(e){ /* ignore */ }
+}
+
+function showGameScreen(){
+  $("lobbyPanel").style.display = "none";
+  $("gameScreen").style.display = "flex";
 }
