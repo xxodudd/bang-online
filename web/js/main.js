@@ -142,12 +142,22 @@ socket.on("room:update", (state)=>{ lastState = state || lastState;
     IN_GAME: "게임 중",
     ENDED: "게임 종료"
   };
-  $("status").innerText = STATUS_KR[state.status] || state.status;
-  $("turnSeat").innerText = (state.turnSeat ?? "-");
-  $("turnSeatView").innerText = (state.turnSeat ?? "-");
+  if ($("status")) {
+    $("status").innerText = STATUS_KR[state.status] || state.status;
+  }
+
+  if ($("turnSeat")) {
+    $("turnSeat").innerText = (state.turnSeat ?? "-");
+  }
+
+  if ($("turnSeatView")) {
+    $("turnSeatView").innerText = (state.turnSeat ?? "-");
+  }
   renderPlayers(state.players, state.turnSeat);
   renderPiles(state);
-  $("playerCount").textContent = `(${state.players.length}명)`;
+  if ($("playerCount")) {
+    $("playerCount").textContent = `(${state.players.length}명)`;
+  }
 });
 socket.on("log", ({text})=> { addLog(text); notify(); });
 socket.on("chat:append", ({nick, text})=>{
