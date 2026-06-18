@@ -107,6 +107,7 @@ socket.on("disconnect", (r)=>{
 });
 
 socket.on("room:created", ({code, seat})=>{
+  showWaitingScreen();
   mySeat = seat;
   $("currentRoom").innerText = code;
   $("roomCode").value = code;
@@ -115,6 +116,7 @@ socket.on("room:created", ({code, seat})=>{
   notify();
 });
 socket.on("room:joined", ({code, seat, spectator})=>{
+  showWaitingScreen();
   mySeat = seat;
   $("currentRoom").innerText = code;
   localStorage.setItem("bang:room", code);
@@ -128,7 +130,6 @@ socket.on("room:joined", ({code, seat, spectator})=>{
   notify();
 });
 socket.on("room:update", (state)=>{ lastState = state || lastState;
-  
   if (state.status === "IN_GAME") {
     showGameScreen();
   }
@@ -479,6 +480,24 @@ function toast(msg){
 
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function showLobbyScreen(){
+  $("lobbyPanel").style.display = "flex";
+  $("waitingScreen").style.display = "none";
+  $("gameScreen").style.display = "none";
+}
+
+function showWaitingScreen(){
+  $("lobbyPanel").style.display = "none";
+  $("waitingScreen").style.display = "flex";
+  $("gameScreen").style.display = "none";
+}
+
+function showGameScreen(){
+  $("lobbyPanel").style.display = "none";
+  $("waitingScreen").style.display = "none";
+  $("gameScreen").style.display = "flex";
 }
 
 // Notification sound (simple WebAudio beep)

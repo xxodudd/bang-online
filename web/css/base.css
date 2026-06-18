@@ -244,3 +244,24 @@ input, .pill { padding:8px 10px; border-radius:10px; border:1px solid var(--bord
   gap:8px;
   margin-top:12px;
 }
+
+.waiting-screen{
+  min-height: calc(100vh - 40px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.waiting-card{
+  width:360px;
+  padding:32px;
+  border-radius:18px;
+  background:#f4ead8;
+  border:3px solid #8b5a2b;
+  box-shadow:0 10px 30px rgba(0,0,0,0.12);
+  text-align:center;
+}
+
+.waiting-card button{
+  margin:6px;
+}

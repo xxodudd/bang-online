@@ -9,38 +9,34 @@
 <body>
   <header id="lobbyPanel" class="lobby-screen">
     <div class="lobby-card">
-      <h1 class="bang-logo">BANG!</h1>
+     <h1 class="bang-logo">BANG!</h1>
 
       <input id="nick" class="lobby-input" placeholder="닉네임을 입력하세요" />
 
-      <div class="lobby-row">
-        <button id="btnCreate" class="primary">방 만들기</button>
-      </div>
+      <button id="btnCreate" class="primary">방 만들기</button>
 
       <div class="lobby-row">
         <input id="roomCode" class="lobby-input" placeholder="방 코드" />
         <button id="btnJoin">참가</button>
       </div>
-
-      <button id="btnStart">게임 시작</button>
-
-      <div class="lobby-sub-info">
-        현재 방: <b id="currentRoom">-</b>
-        <button id="btnCopy">복사</button>
-        <br />
-        상태: <b id="status">-</b>
-        현재 턴 좌석: <b id="turnSeat">-</b>
-        내 좌석: <b id="mySeat" class="muted">-</b>
-      </div>
-
-      <div class="lobby-options">
-        <span class="pill">알림음 <input type="checkbox" id="soundToggle"></span>
-        <button id="btnSaveLog">로그 저장</button>
-        <button id="btnLeave" class="danger">나가기</button>
-        <button id="btnEndTurn">턴 종료</button>
-      </div>
     </div>
   </header>
+
+  <section id="waitingScreen" class="waiting-screen" style="display:none;">
+    <div class="waiting-card">
+      <h1>대기방</h1>
+
+      <p>현재 방: <b id="currentRoom">-</b>
+        <button id="btnCopy">복사</button>
+      </p>
+
+      <p>상태: <b id="status">-</b></p>
+      <p>내 좌석: <b id="mySeat" class="muted">-</b></p>
+
+      <button id="btnStart" class="primary">게임 시작</button>
+      <button id="btnLeave" class="danger">나가기</button>
+    </div>
+  </section>
 
   <main id="gameScreen" class="game-screen" style="display:none;">
 
@@ -95,7 +91,7 @@
       </div>
     </div>
   </div>
-  
+
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="js/main.js"></script>
 </body>
