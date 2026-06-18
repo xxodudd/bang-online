@@ -9,9 +9,9 @@ h1 { margin: 0 0 12px; font-size: 22px; }
 .row { display:flex; gap:8px; margin-bottom:8px; flex-wrap: wrap; }
 .players {
   position: relative;
-  width: 720px;
-  height: 520px;
-  margin: 20px auto;
+  width: min(760px, 90vw);
+  height: 360px;
+  margin: 8px auto;
   border-radius: 50%;
   background: #f4ead8;
   border: 3px solid #8b5a2b;
