@@ -7,29 +7,31 @@
   <link rel="stylesheet" href="css/base.css">
 </head>
 <body>
+  <header class="top-panel">
   <h1>Bang Online</h1>
 
-  <div class="row toolbar">
-    <input id="nick" placeholder="닉네임" />
-    <button id="btnCreate" class="primary">방 만들기</button>
-    <input id="roomCode" placeholder="방 코드 (예: ABCDE)" />
-    <button id="btnJoin">참가</button>
-    <button id="btnStart">게임 시작(호스트)</button>
-    <button id="btnEndTurn">턴 종료</button>
-    <div class="spacer"></div>
-    <span class="pill">알림음 <input type="checkbox" id="soundToggle"></span>
-    <button id="btnSaveLog" title="로그 저장">로그 저장</button>
-    <button id="btnLeave" class="danger" title="소켓 연결 종료">나가기</button>
-  </div>
+    <div class="row toolbar">
+      <input id="nick" placeholder="닉네임" />
+      <button id="btnCreate" class="primary">방 만들기</button>
+      <input id="roomCode" placeholder="방 코드 (예: ABCDE)" />
+      <button id="btnJoin">참가</button>
+      <button id="btnStart">게임 시작(호스트)</button>
+      <button id="btnEndTurn">턴 종료</button>
+      <div class="spacer"></div>
+      <span class="pill">알림음 <input type="checkbox" id="soundToggle"></span>
+      <button id="btnSaveLog" title="로그 저장">로그 저장</button>
+      <button id="btnLeave" class="danger" title="소켓 연결 종료">나가기</button>
+    </div>
 
-  <div class="row" style="align-items:center">
-    <div>현재 방: <b id="currentRoom">-</b> <button id="btnCopy" title="방 코드 복사">복사</button></div>
-    <div style="margin-left:12px">상태: <b id="status">-</b></div>
-    <div style="margin-left:12px">현재 턴 좌석: <b id="turnSeat">-</b></div>
-    <div style="margin-left:12px">내 좌석(추정): <b id="mySeat" class="muted">-</b></div>
-    <div class="spacer"></div>
-    <div class="muted">단축키: 채팅 전송 <span class="kbd">Enter</span></div>
-  </div>
+    <div class="row room-info" style="align-items:center">
+      <div>현재 방: <b id="currentRoom">-</b> <button id="btnCopy" title="방 코드 복사">복사</button></div>
+      <div style="margin-left:12px">상태: <b id="status">-</b></div>
+      <div style="margin-left:12px">현재 턴 좌석: <b id="turnSeat">-</b></div>
+      <div style="margin-left:12px">내 좌석(추정): <b id="mySeat" class="muted">-</b></div>
+      <div class="spacer"></div>
+      <div class="muted">단축키: 채팅 전송 <span class="kbd">Enter</span></div>
+    </div>
+  </header>
 
   <main id="gameScreen" class="game-screen">
 

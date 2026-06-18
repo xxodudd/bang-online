@@ -155,3 +155,28 @@ input, .pill { padding:8px 10px; border-radius:10px; border:1px solid var(--bord
   width:120px;
   text-align:center;
 }
+
+.top-panel{
+  margin-bottom:8px;
+}
+
+.top-panel h1{
+  margin-bottom:8px;
+}
+
+.room-info{
+  font-size:13px;
+}
+
+.toolbar{
+  gap:6px;
+}
+
+.toolbar input{
+  height:34px;
+}
+
+.toolbar button{
+  height:36px;
+  padding:6px 10px;
+}
