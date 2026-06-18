@@ -264,3 +264,9 @@ input, .pill { padding:8px 10px; border-radius:10px; border:1px solid var(--bord
 .waiting-card button{
   margin:6px;
 }
+
+.game-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
