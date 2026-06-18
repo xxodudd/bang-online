@@ -136,3 +136,22 @@ input, .pill { padding:8px 10px; border-radius:10px; border:1px solid var(--bord
   transform:translate(-50%, -50%);
   text-align:center;
 }
+
+.table-wrapper{
+  position:relative;
+}
+
+.center-pile{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  display:flex;
+  gap:20px;
+  z-index:20;
+}
+
+.center-pile .card{
+  width:120px;
+  text-align:center;
+}

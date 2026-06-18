@@ -334,46 +334,55 @@ function renderPlayers(players, turnSeat){
   const root = $("players");
   root.innerHTML = "";
 
+  const n = players.length;
+
   const layoutMap = {
     4: [
-      { left: "50%", top: "8%" },
-      { left: "14%", top: "48%" },
-      { left: "50%", top: "88%" },
-      { left: "86%", top: "48%" },
+      { left: "50%", top: "88%" }, // 나
+      { left: "16%", top: "52%" },
+      { left: "50%", top: "12%" },
+      { left: "84%", top: "52%" },
     ],
     5: [
-      { left: "50%", top: "8%" },
-      { left: "16%", top: "38%" },
-      { left: "26%", top: "82%" },
-      { left: "74%", top: "82%" },
-      { left: "84%", top: "38%" },
+      { left: "50%", top: "88%" }, // 나
+      { left: "16%", top: "58%" },
+      { left: "35%", top: "14%" },
+      { left: "65%", top: "14%" },
+      { left: "84%", top: "58%" },
     ],
     6: [
-      { left: "50%", top: "7%" },
-      { left: "18%", top: "28%" },
-      { left: "16%", top: "68%" },
-      { left: "50%", top: "90%" },
-      { left: "84%", top: "68%" },
-      { left: "82%", top: "28%" },
+      { left: "50%", top: "88%" }, // 나
+      { left: "16%", top: "66%" },
+      { left: "20%", top: "28%" },
+      { left: "50%", top: "12%" },
+      { left: "80%", top: "28%" },
+      { left: "84%", top: "66%" },
     ],
     7: [
-      { left: "50%", top: "7%" },
-      { left: "22%", top: "20%" },
-      { left: "12%", top: "55%" },
-      { left: "28%", top: "86%" },
-      { left: "72%", top: "86%" },
-      { left: "88%", top: "55%" },
-      { left: "78%", top: "20%" },
+      { left: "50%", top: "88%" }, // 나
+      { left: "15%", top: "68%" },
+      { left: "18%", top: "34%" },
+      { left: "38%", top: "13%" },
+      { left: "62%", top: "13%" },
+      { left: "82%", top: "34%" },
+      { left: "85%", top: "68%" },
     ],
   };
 
-  const positions = layoutMap[players.length] || [];
+  const positions = layoutMap[n] || [];
 
-  players.forEach((p, index)=>{
+  players.forEach((p)=>{
     const el = document.createElement("div");
     el.className = "card player-card";
 
-    const pos = positions[index] || { left: "50%", top: "50%" };
+    let relativeIndex = p.seat;
+
+    if (mySeat !== null && mySeat !== undefined) {
+      relativeIndex = (p.seat - mySeat + n) % n;
+    }
+
+    const pos = positions[relativeIndex] || { left: "50%", top: "50%" };
+
     el.style.left = pos.left;
     el.style.top = pos.top;
 
