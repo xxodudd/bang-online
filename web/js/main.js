@@ -51,7 +51,10 @@ $("btnJoin").onclick = ()=>{
   socket.emit("room:join", { code, nick });
 };
 $("btnStart").onclick = ()=> socket.emit("game:start");
-$("btnEndTurn").onclick = ()=> socket.emit("turn:end");
+
+if ($("btnEndTurn")) {
+  $("btnEndTurn").onclick = ()=> socket.emit("turn:end");
+}
 
 // Chat actions
 $("btnSend").onclick = sendChat;
