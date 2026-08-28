@@ -424,7 +424,6 @@ function renderPlayers(players, turnSeat){
 
     el.innerHTML = `
       <b>${escapeHtml(p.nick)}</b><br/>
-      좌석 ${p.seat}<br/>
       HP ${p.hp}/${p.maxHp ?? "?"}<br/>
       손패 ${p.handCount ?? "?"}장
       ${roleText}
