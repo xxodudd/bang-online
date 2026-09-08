@@ -417,9 +417,9 @@ def assign_characters_and_setup(r):
         p["alive"] = True
     return True, None
 
-def deal_initial_hands(r, n_cards=4):
+def deal_initial_hands(r):
     for p in r["players"]:
-        p["hand"].extend(draw_n(r, n_cards))
+        p["hand"].extend(draw_n(r, p["max_hp"]))
         dm_hand(p)
 
 def announce(code, text):
@@ -1072,8 +1072,8 @@ def on_game_start():
     sheriff = next(p for p in r["players"] if p["role"] == "SHERIFF")
     announce(code, f"보안관은 {sheriff['nick']} 입니다. (보안관만 공개)")
 
-    # 초기 손패
-    deal_initial_hands(r, 4)
+    # 초기 손패는 보안관 보너스를 포함한 각 플레이어의 최대 체력만큼 지급
+    deal_initial_hands(r)
 
     # 개인 DM: 역할/캐릭터
     for p in r["players"]:
