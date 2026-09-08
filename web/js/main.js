@@ -29,6 +29,13 @@ window.playBeer = function(){
   socket.emit('action:play', { cardId: beer.id });
 };
 
+window.kickPlayer = function(targetSeat){
+  if (!confirm("이 플레이어를 강제 퇴장시키겠습니까? 게임에서는 사망 처리됩니다.")) {
+    return;
+  }
+  socket.emit("player:kick", { targetSeat });
+};
+
 const $ = (id)=>document.getElementById(id);
 
 const logDiv = $("log");
@@ -105,25 +112,40 @@ if ($("btnSaveLog")) {
 // Socket events
 socket.on("connect", ()=>{
   toast("서버에 연결되었습니다.");
+
+  const reconnectToken = localStorage.getItem("bang:reconnectToken");
+  const reconnectRoom = localStorage.getItem("bang:room");
+  if (reconnectToken && reconnectRoom) {
+    socket.emit("room:reconnect", {
+      code: reconnectRoom,
+      reconnectToken
+    });
+  }
 });
 socket.on("disconnect", (r)=>{
   toast("연결이 끊어졌습니다.");
 });
 
-socket.on("room:created", ({code, seat})=>{
+socket.on("room:created", ({code, seat, reconnectToken})=>{
   showWaitingScreen();
   mySeat = seat;
   $("currentRoom").innerText = code;
   $("roomCode").value = code;
   localStorage.setItem("bang:room", code);
+  localStorage.setItem("bang:reconnectToken", reconnectToken);
   addLog(`방이 생성되었습니다: ${code}`);
   notify();
 });
-socket.on("room:joined", ({code, seat, spectator})=>{
+socket.on("room:joined", ({code, seat, spectator, reconnectToken})=>{
   showWaitingScreen();
   mySeat = seat;
   $("currentRoom").innerText = code;
   localStorage.setItem("bang:room", code);
+  if (reconnectToken) {
+    localStorage.setItem("bang:reconnectToken", reconnectToken);
+  } else {
+    localStorage.removeItem("bang:reconnectToken");
+  }
 
   if (spectator) {
     addLog(`방에 관전자로 참가했습니다: ${code}`);
@@ -134,11 +156,31 @@ socket.on("room:joined", ({code, seat, spectator})=>{
   notify();
 });
 
-socket.on("seat:update", ({seat})=>{
+socket.on("seat:update", ({seat, reconnectToken})=>{
   mySeat = seat;
+  if (reconnectToken) {
+    localStorage.setItem("bang:reconnectToken", reconnectToken);
+  }
   if ($("mySeat")) {
     $("mySeat").innerText = seat ?? "-";
   }
+});
+
+socket.on("room:reconnected", ({code, seat})=>{
+  mySeat = seat;
+  $("currentRoom").innerText = code;
+  $("roomCode").value = code;
+  showWaitingScreen();
+  addLog(`방에 재접속했습니다: ${code}`);
+});
+
+socket.on("reconnect:failed", ()=>{
+  localStorage.removeItem("bang:reconnectToken");
+});
+
+socket.on("player:kicked", ()=>{
+  localStorage.removeItem("bang:reconnectToken");
+  alert("호스트에 의해 강제 퇴장되었습니다. 이제 관전만 할 수 있습니다.");
 });
 
 socket.on("room:update", (state)=>{ lastState = state || lastState;
@@ -161,7 +203,7 @@ socket.on("room:update", (state)=>{ lastState = state || lastState;
   if ($("turnSeatView")) {
     $("turnSeatView").innerText = (state.turnSeat ?? "-");
   }
-  renderPlayers(state.players, state.turnSeat);
+  renderPlayers(state.players, state.turnSeat, state.hostSeat);
   renderPiles(state);
   if ($("playerCount")) {
     $("playerCount").textContent = `(${state.players.length}명)`;
@@ -357,7 +399,7 @@ function openRespondModal(needs){
 }
 
 // ---------------- UI helpers ----------------
-function renderPlayers(players, turnSeat){
+function renderPlayers(players, turnSeat, hostSeat){
   const root = $("players");
   root.innerHTML = "";
 
@@ -430,13 +472,23 @@ function renderPlayers(players, turnSeat){
         ? `<br/>역할: ${ROLE_KR[p.revealedRole] || p.revealedRole}`
         : "";
 
+    const connectionText = p.connected ? "" : "<br/><span class=\"muted\">연결 끊김</span>";
+    const eliminatedText = p.alive ? "" : "<br/><span class=\"muted\">탈락 · 관전 중</span>";
+    const kickButton =
+      mySeat === hostSeat && p.seat !== mySeat && p.alive
+        ? `<br/><button type="button" onclick="kickPlayer(${p.seat})">강제 퇴장</button>`
+        : "";
+
     el.innerHTML = `
       <b>${escapeHtml(p.nick)}</b><br/>
       HP ${p.hp}/${p.maxHp ?? "?"}<br/>
       손패 ${p.handCount ?? "?"}장
       ${roleText}
+      ${connectionText}
+      ${eliminatedText}
       <br/>
       <span class="muted">${escapeHtml(equipText)}</span>
+      ${kickButton}
     `;
 
     if (p.seat === mySeat) {

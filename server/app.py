@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, join_room, emit
 import random
 import string
 import os
+import secrets
 
 # =========================
 # Flask / Socket.IO 설정
@@ -154,6 +155,10 @@ CHARACTER_POOL = [
 
 def public_state(code):
     r = rooms.get(code, {})
+    host = next(
+        (p for p in r.get("players", []) if p.get("sid") == r.get("host_sid")),
+        None
+    )
     players_pub = []
     for p in r.get("players", []):
         players_pub.append({
@@ -162,6 +167,7 @@ def public_state(code):
             "hp": p["hp"],
             "maxHp": p.get("max_hp"),
             "alive": p["alive"],
+            "connected": p.get("connected", True),
             "revealedRole": p.get("revealedRole"),
             "character": p.get("character"),
             "board": p.get("board", {}),
@@ -179,6 +185,7 @@ def public_state(code):
             for s in r.get("spectators", [])
         ],
         "turnSeat": turn_seat,
+        "hostSeat": host["seat"] if host else None,
         "pending": (r.get("pending") or {}).get("kind"),  # 예: 'ATTACK'
         "deckCount": len(r.get("deck", [])),
         "topDiscard": r.get("discard", [])[-1] if r.get("discard") else None
@@ -543,6 +550,29 @@ def handle_death(r, victim, alive_roles_before=None, killer=None):
     }
 
     return check_victory(r, alive_roles_before)
+
+def clear_pending_for_removed_player(r, seat):
+    """강제 퇴장한 플레이어가 관련된 응답 대기를 정리한다."""
+    pend = r.get("pending")
+    if not pend:
+        return
+    if r.get("status") != "IN_GAME":
+        r["pending"] = None
+        return
+
+    kind = pend.get("kind")
+
+    if kind == "ATTACK" and seat in (pend.get("attacker"), pend.get("target")):
+        r["pending"] = None
+        return
+
+    if kind == "DUEL" and seat in (pend.get("a"), pend.get("b")):
+        r["pending"] = None
+        return
+
+    if kind in ("INDIANS", "GATLING"):
+        pend["queue"] = [queued for queued in pend.get("queue", []) if queued != seat]
+        _prompt_next_in_queue(r)
 
 # ---------- 턴 시작 훅/판정 유틸 ----------
 
@@ -948,7 +978,13 @@ def on_room_create(data):
     code = gen_code()
     rooms[code] = {
         "code": code,
-        "players": [{"sid": request.sid, "nick": nick, "seat": 0}],
+        "players": [{
+            "sid": request.sid,
+            "nick": nick,
+            "seat": 0,
+            "connected": True,
+            "reconnect_token": secrets.token_urlsafe(24)
+        }],
         "spectators": [],
         "host_sid": request.sid,
         "status": "LOBBY",
@@ -959,7 +995,11 @@ def on_room_create(data):
     }
     player_room[request.sid] = code
     join_room(code)
-    emit("room:created", {"code": code, "seat": 0})
+    emit("room:created", {
+        "code": code,
+        "seat": 0,
+        "reconnectToken": rooms[code]["players"][0]["reconnect_token"]
+    })
     broadcast_state(code)
 
 @socketio.on("room:join")
@@ -1009,7 +1049,9 @@ def on_room_join(data):
     r["players"].append({
         "sid": request.sid,
         "nick": nick,
-        "seat": seat
+        "seat": seat,
+        "connected": True,
+        "reconnect_token": secrets.token_urlsafe(24)
     })
 
     player_room[request.sid] = code
@@ -1018,10 +1060,53 @@ def on_room_join(data):
     emit("room:joined", {
         "code": code,
         "seat": seat,
-        "spectator": False
+        "spectator": False,
+        "reconnectToken": r["players"][-1]["reconnect_token"]
     })
 
     announce(code, f"{nick} 님이 입장했습니다.")
+    broadcast_state(code)
+
+@socketio.on("room:reconnect")
+def on_room_reconnect(data):
+    code = (data.get("code") or "").upper()
+    token = data.get("reconnectToken")
+    r = rooms.get(code)
+
+    if not r or not token:
+        emit("reconnect:failed")
+        return
+
+    player = next(
+        (p for p in r["players"] if p.get("reconnect_token") == token),
+        None
+    )
+
+    if not player or player.get("kicked"):
+        emit("reconnect:failed")
+        return
+
+    old_sid = player.get("sid")
+    if player.get("connected") and old_sid != request.sid:
+        emit("error", {"message": "이미 접속 중인 플레이어입니다."})
+        return
+
+    if old_sid == r.get("host_sid"):
+        r["host_sid"] = request.sid
+
+    player["sid"] = request.sid
+    player["connected"] = True
+    player_room[request.sid] = code
+    join_room(code)
+
+    emit("room:reconnected", {"code": code, "seat": player["seat"]})
+
+    if r["status"] in ("IN_GAME", "ENDED"):
+        dm_hand(player)
+        dm_role(player)
+        dm_character(player)
+
+    announce(code, f"{player['nick']} 님이 재접속했습니다.")
     broadcast_state(code)
 
 @socketio.on("game:start")
@@ -1044,7 +1129,9 @@ def on_game_start():
             r["players"].append({
                 "sid": s["sid"],
                 "nick": s["nick"],
-                "seat": len(r["players"])
+                "seat": len(r["players"]),
+                "connected": True,
+                "reconnect_token": secrets.token_urlsafe(24)
             })
 
         r["spectators"] = []
@@ -1061,7 +1148,10 @@ def on_game_start():
     random.shuffle(r["players"])
     for seat, p in enumerate(r["players"]):
         p["seat"] = seat
-        socketio.emit("seat:update", {"seat": seat}, to=p["sid"])
+        socketio.emit("seat:update", {
+            "seat": seat,
+            "reconnectToken": p["reconnect_token"]
+        }, to=p["sid"])
 
     # 덱 생성
     r["deck"] = build_deck_basic()
@@ -1530,6 +1620,47 @@ def on_sid_ketchum(data):
     announce(code, f"{me['nick']} 시드 케첨 능력 발동! 카드 2장을 버리고 체력 1 회복")
     broadcast_state(code)
 
+@socketio.on("player:kick")
+def on_player_kick(data):
+    code, r = get_room_by_sid(request.sid)
+    if not r or r["status"] != "IN_GAME":
+        return
+
+    if request.sid != r.get("host_sid"):
+        emit("error", {"message": "호스트만 강제 퇴장시킬 수 있습니다."})
+        return
+
+    target_seat = data.get("targetSeat")
+    target = next(
+        (p for p in r["players"] if p["seat"] == target_seat),
+        None
+    )
+
+    if not target or not target["alive"]:
+        emit("error", {"message": "강제 퇴장 대상이 유효하지 않습니다."})
+        return
+
+    if target["sid"] == request.sid:
+        emit("error", {"message": "호스트 자신은 강제 퇴장시킬 수 없습니다."})
+        return
+
+    target["kicked"] = True
+    target["connected"] = False
+    target["reconnect_token"] = None
+    alive_roles_before = [p["role"] for p in r["players"] if p["alive"]]
+
+    announce(code, f"{target['nick']} 님이 호스트에 의해 강제 퇴장되었습니다.")
+    ended = handle_death(r, target, alive_roles_before, killer=None)
+    dm_hand(target)
+    socketio.emit("player:kicked", to=target["sid"])
+    clear_pending_for_removed_player(r, target["seat"])
+
+    if not ended and r["players"][r["turn_idx"]] is target:
+        r["turn_idx"] = next_turn_index(r)
+        start_turn(r)
+
+    broadcast_state(code)
+
 @socketio.on("action:respond")
 def on_action_respond(data):
     """
@@ -1670,33 +1801,42 @@ def on_disconnect():
     if not code or code not in rooms: return
     r = rooms[code]
     pidx = next((i for i,p in enumerate(r["players"]) if p["sid"]==request.sid), None)
+
     if pidx is not None:
-        nick = r["players"][pidx]["nick"]
-        was_alive = r["players"][pidx].get("alive", True)
-        # 로비에서는 완전 제거 / 게임 중에는 (MVP) 즉시 제거로 처리
+        player = r["players"][pidx]
+        nick = player["nick"]
+
+        # 로비에서는 완전 제거한다.
         if r["status"] == "LOBBY":
             r["players"].pop(pidx)
             for i,p in enumerate(r["players"]): p["seat"] = i
+
+            if request.sid == r.get("host_sid") and r["players"]:
+                r["host_sid"] = r["players"][0]["sid"]
+
             announce(code, f"{nick} 님이 나갔습니다.")
         else:
-            r["players"][pidx]["alive"] = False
-            r["players"][pidx]["revealedRole"] = r["players"][pidx]["role"]
-            announce(code, f"{nick} 님이 퇴장(제거)되었습니다. 역할: {r['players'][pidx]['role']}")
-            check_victory(r)  # 승리 여부 확인
+            # 게임 중에는 자리를 보존해 같은 브라우저가 재접속할 수 있게 한다.
+            player["connected"] = False
+            if not player.get("kicked"):
+                announce(code, f"{nick} 님의 연결이 끊겼습니다. 재접속을 기다립니다.")
 
         player_room.pop(request.sid, None)
         if not r["players"]:
             rooms.pop(code, None)
         else:
-            # 턴 보정
-            if r["status"] == "IN_GAME":
-                # 현재 턴 주자가 나갔으면 다음 생존자로 이동
-                if r["players"][r["turn_idx"]]["sid"] == request.sid:
-                    r["turn_idx"] = next_turn_index(r)
-                    if r["status"] == "IN_GAME":
-                        start_turn(r)
-                        return
             broadcast_state(code)
+        return
+
+    # 관전자는 재접속 대상 플레이어가 아니므로 연결 종료 시 목록에서 제거한다.
+    spectator = next(
+        (s for s in r.get("spectators", []) if s["sid"] == request.sid),
+        None
+    )
+    if spectator:
+        r["spectators"].remove(spectator)
+        player_room.pop(request.sid, None)
+        broadcast_state(code)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5173))
