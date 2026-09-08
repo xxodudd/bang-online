@@ -1088,8 +1088,9 @@ def on_room_reconnect(data):
 
     old_sid = player.get("sid")
     if player.get("connected") and old_sid != request.sid:
-        emit("error", {"message": "이미 접속 중인 플레이어입니다."})
-        return
+        # 새로고침 직후에는 새 연결이 기존 disconnect보다 먼저 도착할 수 있다.
+        # 비밀 토큰이 일치하면 새 연결이 기존 연결을 안전하게 이어받는다.
+        player_room.pop(old_sid, None)
 
     if old_sid == r.get("host_sid"):
         r["host_sid"] = request.sid
