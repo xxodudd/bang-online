@@ -777,8 +777,14 @@ def start_turn(r):
         # 폭발로 사망해 게임이 끝났을 수 있음
         if r["status"] != "IN_GAME":
             return
-        # 다이너 처리 후에도 살아 있으면 계속 진행
-        pass
+
+        # 다이너마이트로 사망했다면 감옥/드로우 단계를 진행하지 않고
+        # 즉시 다음 생존자에게 턴을 넘긴다.
+        if not curr["alive"]:
+            r["turn_idx"] = next_turn_index(r)
+            start_turn(r)
+            broadcast_state(r["code"])
+            return
 
     # 2) 감옥
     _, skip = resolve_jail(r, curr)
@@ -880,7 +886,8 @@ def start_turn(r):
         broadcast_state(r["code"])
 
 def ensure_my_turn(r, sid):
-    return r["players"][r["turn_idx"]]["sid"] == sid
+    curr = r["players"][r["turn_idx"]]
+    return curr["alive"] and curr["sid"] == sid
 
 def ensure_has_card(p, card_id, ctype=None):
     for i, c in enumerate(p["hand"]):
