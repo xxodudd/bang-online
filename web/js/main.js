@@ -45,6 +45,8 @@ const soundToggle = $("soundToggle");
 // Restore last nick/room
 const lastRoom = localStorage.getItem("bang:room");
 if (lastRoom) $("roomCode").value = lastRoom;
+// 이전 버전의 공유 재접속 토큰은 탭 간 신원 충돌을 일으키므로 제거한다.
+localStorage.removeItem("bang:reconnectToken");
 
 $("btnCreate").onclick = ()=>{
   $("btnCreate").disabled = true;
@@ -113,8 +115,8 @@ if ($("btnSaveLog")) {
 socket.on("connect", ()=>{
   toast("서버에 연결되었습니다.");
 
-  const reconnectToken = localStorage.getItem("bang:reconnectToken");
-  const reconnectRoom = localStorage.getItem("bang:room");
+  const reconnectToken = sessionStorage.getItem("bang:reconnectToken");
+  const reconnectRoom = sessionStorage.getItem("bang:reconnectRoom");
   if (reconnectToken && reconnectRoom) {
     socket.emit("room:reconnect", {
       code: reconnectRoom,
@@ -132,7 +134,8 @@ socket.on("room:created", ({code, seat, reconnectToken})=>{
   $("currentRoom").innerText = code;
   $("roomCode").value = code;
   localStorage.setItem("bang:room", code);
-  localStorage.setItem("bang:reconnectToken", reconnectToken);
+  sessionStorage.setItem("bang:reconnectRoom", code);
+  sessionStorage.setItem("bang:reconnectToken", reconnectToken);
   addLog(`방이 생성되었습니다: ${code}`);
   notify();
 });
@@ -142,9 +145,11 @@ socket.on("room:joined", ({code, seat, spectator, reconnectToken})=>{
   $("currentRoom").innerText = code;
   localStorage.setItem("bang:room", code);
   if (reconnectToken) {
-    localStorage.setItem("bang:reconnectToken", reconnectToken);
+    sessionStorage.setItem("bang:reconnectRoom", code);
+    sessionStorage.setItem("bang:reconnectToken", reconnectToken);
   } else {
-    localStorage.removeItem("bang:reconnectToken");
+    sessionStorage.removeItem("bang:reconnectRoom");
+    sessionStorage.removeItem("bang:reconnectToken");
   }
 
   if (spectator) {
@@ -159,7 +164,11 @@ socket.on("room:joined", ({code, seat, spectator, reconnectToken})=>{
 socket.on("seat:update", ({seat, reconnectToken})=>{
   mySeat = seat;
   if (reconnectToken) {
-    localStorage.setItem("bang:reconnectToken", reconnectToken);
+    const code = $("currentRoom").innerText.trim() || localStorage.getItem("bang:room");
+    if (code && code !== "-") {
+      sessionStorage.setItem("bang:reconnectRoom", code);
+    }
+    sessionStorage.setItem("bang:reconnectToken", reconnectToken);
   }
   if ($("mySeat")) {
     $("mySeat").innerText = seat ?? "-";
@@ -175,11 +184,13 @@ socket.on("room:reconnected", ({code, seat})=>{
 });
 
 socket.on("reconnect:failed", ()=>{
-  localStorage.removeItem("bang:reconnectToken");
+  sessionStorage.removeItem("bang:reconnectRoom");
+  sessionStorage.removeItem("bang:reconnectToken");
 });
 
 socket.on("player:kicked", ()=>{
-  localStorage.removeItem("bang:reconnectToken");
+  sessionStorage.removeItem("bang:reconnectRoom");
+  sessionStorage.removeItem("bang:reconnectToken");
   alert("호스트에 의해 강제 퇴장되었습니다. 이제 관전만 할 수 있습니다.");
 });
 
