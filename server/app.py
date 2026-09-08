@@ -165,9 +165,7 @@ def public_state(code):
             "revealedRole": p.get("revealedRole"),
             "character": p.get("character"),
             "board": p.get("board", {}),
-            "handCount": len(p.get("hand", [])),
-            "deckCount": len(r["deck"]),
-            "topDiscard": r["discard"][-1] if r["discard"] else None
+            "handCount": len(p.get("hand", []))
         })
     turn_seat = None
     if r.get("players") and r.get("status") == "IN_GAME":
@@ -181,7 +179,9 @@ def public_state(code):
             for s in r.get("spectators", [])
         ],
         "turnSeat": turn_seat,
-        "pending": (r.get("pending") or {}).get("kind")  # 예: 'ATTACK'
+        "pending": (r.get("pending") or {}).get("kind"),  # 예: 'ATTACK'
+        "deckCount": len(r.get("deck", [])),
+        "topDiscard": r.get("discard", [])[-1] if r.get("discard") else None
     }
 
 def broadcast_state(code):
