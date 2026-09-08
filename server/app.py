@@ -1050,6 +1050,12 @@ def on_game_start():
         emit("error", {"message":"최대 7명까지 플레이할 수 있습니다."})
         return
 
+    # 게임마다 플레이어 자리 배치를 무작위로 정한 뒤 좌석 번호를 다시 맞춘다.
+    random.shuffle(r["players"])
+    for seat, p in enumerate(r["players"]):
+        p["seat"] = seat
+        socketio.emit("seat:update", {"seat": seat}, to=p["sid"])
+
     # 덱 생성
     r["deck"] = build_deck_basic()
     r["discard"] = []
@@ -1075,7 +1081,8 @@ def on_game_start():
         dm_character(p)
 
     r["status"] = "IN_GAME"
-    r["turn_idx"] = 0  # 좌석 0부터 시작
+    # 보안관부터 시작하고 이후 턴은 좌석 번호가 증가하는 시계방향으로 진행한다.
+    r["turn_idx"] = sheriff["seat"]
     r["pending"] = None
     broadcast_state(code)
     start_turn(r)

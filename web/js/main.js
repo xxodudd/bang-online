@@ -133,6 +133,14 @@ socket.on("room:joined", ({code, seat, spectator})=>{
 
   notify();
 });
+
+socket.on("seat:update", ({seat})=>{
+  mySeat = seat;
+  if ($("mySeat")) {
+    $("mySeat").innerText = seat ?? "-";
+  }
+});
+
 socket.on("room:update", (state)=>{ lastState = state || lastState;
   if (state.status === "IN_GAME") {
     showGameScreen();
